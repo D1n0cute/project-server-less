@@ -8,12 +8,14 @@ pipeline {
 
     stages {
 
-      stage('Checkout') {
-          steps {
-            git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
-          }
+          stage('Checkout') {
+              steps {
+                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+              }
 
-}        stage('Docker Build') {
+          }        
+
+        stage('Docker Build') {
             steps {
                 sh '''
                 docker build -t $DOCKER_IMAGE:$TAG -t $DOCKER_IMAGE:latest ./frontend
