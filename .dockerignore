@@ -1,0 +1,42 @@
+# node modules (หนัก + build ใหม่ใน container)
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# build output (ให้ Docker build ใหม่เอง)
+dist
+build
+
+# git
+.git
+.gitignore
+
+# env (กันพลาด)
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# logs
+logs
+*.log
+
+# testing
+coverage
+
+# docker files (ถ้าไม่จำเป็นต้อง copy)
+Dockerfile
+docker-compose.yml
+
+# Jenkins
+Jenkinsfile
+
+# misc
+*.local
