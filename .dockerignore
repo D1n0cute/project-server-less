@@ -40,3 +40,14 @@ Jenkinsfile
 
 # misc
 *.local
+
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Secrets
+*.tfvars
+*.env

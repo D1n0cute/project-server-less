@@ -8,12 +8,11 @@ pipeline {
 
     stages {
 
-          stage('Checkout') {
-              steps {
+        stage('Checkout') {
+            steps {
                 git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
-              }
-
-          }        
+            }
+        }
 
         stage('Docker Build') {
             steps {
@@ -39,9 +38,23 @@ pipeline {
             }
         }
 
+        stage('Connect AKS') {
+            steps {
+                sh '''
+                az aks get-credentials \
+                  --resource-group aks-rg \
+                  --name my-aks-cluster \
+                  --overwrite-existing
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
-                echo 'Deploy step here'
+                sh '''
+                cd ansible
+                ansible-playbook -i inventory deploy.yml
+                '''
             }
         }
     }

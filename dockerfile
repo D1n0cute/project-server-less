@@ -2,14 +2,37 @@ FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
+# -------------------------
+# Basic tools
+# -------------------------
 RUN apt-get update && apt-get install -y \
   ca-certificates \
   curl \
   gnupg \
   lsb-release \
-  git
+  git \
+  python3 \
+  python3-pip \
+  unzip
 
-# เพิ่ม Docker repo
+# -------------------------
+# Install Ansible
+# -------------------------
+RUN pip3 install ansible --break-system-packages
+# -------------------------
+# Install kubectl
+# -------------------------
+RUN curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" && \
+  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# -------------------------
+# Install Azure CLI
+# -------------------------
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# -------------------------
+# Install Docker CLI
+# -------------------------
 RUN mkdir -p /etc/apt/keyrings && \
   curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
   echo \
@@ -18,13 +41,16 @@ RUN mkdir -p /etc/apt/keyrings && \
   $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
   > /etc/apt/sources.list.d/docker.list
 
-# ติดตั้ง Docker CLI
 RUN apt-get update && apt-get install -y docker-ce-cli
 
-# 🔥 เพิ่ม group docker ก่อน
-RUN groupadd docker
-
-# 🔥 แล้วค่อย add user
+# -------------------------
+# Docker permission
+# -------------------------
+RUN groupadd docker || true
 RUN usermod -aG docker jenkins
+# -------------------------
+# Clean
+# -------------------------
+RUN apt-get clean
 
 USER jenkins
