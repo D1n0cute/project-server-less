@@ -2,10 +2,29 @@ FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
-# ติดตั้งเฉพาะที่จำเป็น
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends docker.io git && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+  ca-certificates \
+  curl \
+  gnupg \
+  lsb-release \
+  git
 
+# เพิ่ม Docker repo
+RUN mkdir -p /etc/apt/keyrings && \
+  curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+  echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+  > /etc/apt/sources.list.d/docker.list
+
+# ติดตั้ง Docker CLI
+RUN apt-get update && apt-get install -y docker-ce-cli
+
+# 🔥 เพิ่ม group docker ก่อน
+RUN groupadd docker
+
+# 🔥 แล้วค่อย add user
+RUN usermod -aG docker jenkins
 
 USER jenkins
