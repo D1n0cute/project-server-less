@@ -1,5 +1,5 @@
-import FoodMenu from "./FoodMenu";
+import Wall from "./Wall";
 
 export default function App() {
-  return <FoodMenu />;
+  return <Wall />;
 }
