@@ -15,10 +15,18 @@ RUN apt-get update && apt-get install -y \
   python3-pip \
   unzip
 
+# -------------------------  
+# Install Terraform
+# -------------------------
+RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list && \
+    apt-get update && apt-get install -y terraform
+
 # -------------------------
 # Install Ansible
 # -------------------------
 RUN pip3 install ansible --break-system-packages
+
 # -------------------------
 # Install kubectl
 # -------------------------
@@ -48,6 +56,7 @@ RUN apt-get update && apt-get install -y docker-ce-cli
 # -------------------------
 RUN groupadd docker || true
 RUN usermod -aG docker jenkins
+
 # -------------------------
 # Clean
 # -------------------------

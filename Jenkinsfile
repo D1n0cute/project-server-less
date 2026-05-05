@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "pannatronkanla/frontend"
+        FE_IMAGE = "pannatronkanla/frontend"
+        BE_IMAGE = "pannatronkanla/backend"
         TAG = "${BUILD_NUMBER}"
     }
 
@@ -16,9 +17,8 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh '''
-                docker build -t $DOCKER_IMAGE:$TAG -t $DOCKER_IMAGE:latest ./frontend
-                '''
+                sh "docker build -t $FE_IMAGE:$TAG -t $FE_IMAGE:latest ./frontend"
+                sh "docker build -t $BE_IMAGE:$TAG -t $BE_IMAGE:latest ./backend"
             }
         }
 
@@ -31,8 +31,10 @@ pipeline {
                 )]) {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push $DOCKER_IMAGE:$TAG
-                    docker push $DOCKER_IMAGE:latest
+                    docker push $FE_IMAGE:$TAG
+                    docker push $FE_IMAGE:latest
+                    docker push $BE_IMAGE:$TAG
+                    docker push $BE_IMAGE:latest
                     '''
                 }
             }
