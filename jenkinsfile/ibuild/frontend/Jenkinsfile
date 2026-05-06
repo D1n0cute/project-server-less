@@ -24,7 +24,6 @@ pipeline {
                 sh '''
                 echo "=== Testing Frontend ==="
                 cd frontend
-                ls -la
                 npm ci
                 npm run test
                 '''
