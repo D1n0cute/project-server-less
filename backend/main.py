@@ -11,6 +11,7 @@ from models import Message
 from schemas import MessageCreate, MessageOut
 
 
+# testing somting with comment
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # สร้าง table อัตโนมัติถ้ายังไม่มี
@@ -45,7 +46,9 @@ async def get_messages(db: AsyncSession = Depends(get_db)):
     return result.scalars().all()
 
 
-@app.post("/api/messages", response_model=MessageOut, status_code=201, tags=["Messages"])
+@app.post(
+    "/api/messages", response_model=MessageOut, status_code=201, tags=["Messages"]
+)
 async def create_message(body: MessageCreate, db: AsyncSession = Depends(get_db)):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     msg = Message(
