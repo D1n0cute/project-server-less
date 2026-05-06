@@ -14,26 +14,19 @@ pipeline {
             }
         }
         stage('Install & Test') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    args '-u root'
+                }
+            }
             steps {
                 sh '''
                 echo "=== Testing Frontend ==="
-
-                echo "HOST PATH:"
-                pwd
+                cd frontend
                 ls -la
-                ls -la frontend
-
-                docker run --rm \
-                  -v "$WORKSPACE/frontend:/app" \
-                  -w /app \
-                  node:20-alpine \
-                  sh -c "
-                    echo 'INSIDE CONTAINER:';
-                    pwd;
-                    ls -la;
-                    npm ci &&
-                    npm run test
-                  "
+                npm ci
+                npm run test
                 '''
             }
         }
