@@ -12,10 +12,11 @@ provider "azurerm" {
 }
 
 # -------------------------
-# EXISTING Resource Group (FIX)
+# Resource Group (Terraform OWNER)
 # -------------------------
-data "azurerm_resource_group" "rg" {
-  name = "aks-rg"
+resource "azurerm_resource_group" "rg" {
+  name     = "aks-rg"
+  location = "eastasia"
 }
 
 # -------------------------
@@ -23,8 +24,8 @@ data "azurerm_resource_group" "rg" {
 # -------------------------
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "my-aks-cluster"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = "myaks"
 
   default_node_pool {
@@ -62,5 +63,5 @@ output "cluster_name" {
 }
 
 output "resource_group" {
-  value = data.azurerm_resource_group.rg.name
+  value = azurerm_resource_group.rg.name
 }

@@ -29,25 +29,11 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
-            steps {
-                sh '''
-                terraform -chdir=terraform init -reconfigure
-                '''
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                sh '''
-                terraform -chdir=terraform apply -auto-approve
-                '''
-            }
-        }
-
         stage('Get kubeconfig from AKS') {
             steps {
                 sh '''
+                mkdir -p ~/.kube
+
                 az aks get-credentials \
                   --resource-group aks-rg \
                   --name my-aks-cluster \
@@ -56,7 +42,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Deploy Frontend (Ansible)') {
             steps {
                 sh '''
                 cd ansible
