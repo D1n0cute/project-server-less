@@ -48,7 +48,14 @@ pipeline {
                 '''
             }
         }
-
+        stage('Deploy Ingress') {
+            steps {
+                sh '''
+                cd ansible
+                ansible-playbook -i inventory/prod playbooks/ingress.yml
+                '''
+            }
+        }
         stage('Deploy Backend') {
             steps {
                 sh '''
