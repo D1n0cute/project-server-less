@@ -51,5 +51,22 @@ pipeline {
                 }
             }
         }
+
+      stage('Cleanup') {
+          steps {
+              sh '''
+              echo "Cleaning up Docker images..."
+
+              # ลบ image tag build นี้
+              docker rmi $FE_IMAGE:$TAG || true
+
+              # ลบ latest
+              docker rmi $FE_IMAGE:latest || true
+
+              # logout docker hub
+              docker logout || true
+              '''
+          }
+      }
     }
 }
