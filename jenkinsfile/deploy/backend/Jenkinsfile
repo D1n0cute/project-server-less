@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        ARM_CLIENT_ID = credentials('azure-client-id')
+        ARM_CLIENT_SECRET = credentials('azure-client-secret')
+        ARM_TENANT_ID = credentials('azure-tenant-id')
+        ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
+    }
+
     stages {
 
         stage('Checkout') {
@@ -9,26 +16,46 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Azure Login') {
             steps {
                 sh '''
-                cd terraform
-                terraform init
-                terraform apply -auto-approve
+                az login --service-principal \
+                  -u $ARM_CLIENT_ID \
+                  -p $ARM_CLIENT_SECRET \
+                  --tenant $ARM_TENANT_ID
+
+                az account set --subscription $ARM_SUBSCRIPTION_ID
                 '''
             }
         }
+
+        stage('Terraform Apply') {
+            steps {
+                sh '''
+                terraform -chdir=terraform init
+                terraform -chdir=terraform apply -auto-approve
+                '''
+            }
+        }
+
+        stage('Get kubeconfig from AKS') {
+            steps {
+                sh '''
+                az aks get-credentials \
+                  --resource-group aks-rg \
+                  --name my-aks-cluster \
+                  --overwrite-existing
+                '''
+            }
+        }
+
         stage('Deploy Backend') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    sh '''
-                    mkdir -p ~/.kube
-                    cp $KUBECONFIG_FILE ~/.kube/config
-
-                    cd ansible
-                    ansible-playbook -i inventory/prod playbooks/backend.yml
-                    '''
-                }
+                sh '''
+                mkdir -p ~/.kube
+                cd ansible
+                ansible-playbook -i inventory/prod playbooks/backend.yml
+                '''
             }
         }
     }
