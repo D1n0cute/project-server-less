@@ -73,6 +73,8 @@ pipeline {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory/prod playbooks/backend.yml
+                kubectl rollout restart deployment backend
+
                 '''
             }
         }
@@ -82,6 +84,7 @@ pipeline {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory/prod playbooks/ingress.yml
+                kubectl rollout restart deployment ingress
                 '''
             }
         }
