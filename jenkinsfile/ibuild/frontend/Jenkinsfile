@@ -18,12 +18,15 @@ pipeline {
             steps {
                 sh '''
                 echo "=== Testing Frontend ==="
-                ls -la frontend
+
                 docker run --rm \
-                  -v $(pwd)/frontend:/app \
+                  -v $WORKSPACE/frontend:/app \
                   -w /app \
                   node:20-alpine \
                   sh -c "
+                    echo 'Inside container:';
+                    pwd;
+                    ls -la;
                     npm ci &&
                     npm run test
                   "
