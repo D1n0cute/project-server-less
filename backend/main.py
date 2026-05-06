@@ -38,7 +38,7 @@ app.add_middleware(
 
 @app.get("/", tags=["Health"])
 async def root():
-    return {"status": "Oj"}
+    return {"status": "ok"}
 
 
 @app.get("/api/messages", response_model=list[MessageOut])
