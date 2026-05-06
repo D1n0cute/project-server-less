@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: default # 👈 ต้องใส่
 spec:
   replicas: 1
   selector:
@@ -22,8 +23,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
+  namespace: default # 👈 ต้องใส่
 spec:
-  type: LoadBalancer
+  type: ClusterIP # 👈 FIX สำคัญ
   selector:
     app: frontend
   ports:

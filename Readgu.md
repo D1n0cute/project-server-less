@@ -18,3 +18,10 @@ az aks delete \
   --resource-group aks-rg \
   --yes \
   --no-wait
+
+az aks get-credentials \
+  -g aks-rg \
+  -n my-aks-cluster \
+  --overwrite-existing
+
+kubectl apply -f <https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml>
