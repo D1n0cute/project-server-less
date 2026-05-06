@@ -6,4 +6,4 @@
     - name: Apply backend deployment
       kubernetes.core.k8s:
         state: present
-        src: ../k8s/backend.yaml
+        src: "{{ playbook_dir }}/../../k8s/backend.yaml"
