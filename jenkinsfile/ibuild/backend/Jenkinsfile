@@ -17,17 +17,31 @@ pipeline {
         stage('Test Backend') {
             steps {
                 sh '''
-                echo "Testing Backend..."
-                
+                echo "=== Testing Backend ==="
+
+                echo "Current dir:"
+                pwd
+
+                echo "List root:"
+                ls -la
+
+                echo "List backend:"
+                ls -la backend || true
+
                 docker run --rm \
-                  -v $(pwd)/backend:/app \
-                  -w /app \
+                  -v $(pwd):/app \
+                  -w /app/backend \
                   python:3.11-slim \
-                  sh -c "ls -la && pip install -r requirements.txt && pytest"
+                  sh -c "
+                    echo 'Inside container:';
+                    pwd;
+                    ls -la;
+                    pip install -r requirements.txt &&
+                    pytest
+                  "
                 '''
             }
         }
-
         stage('Docker Build') {
             steps {
                 sh "docker build -t $BE_IMAGE:$TAG -t $BE_IMAGE:latest ./backend"
