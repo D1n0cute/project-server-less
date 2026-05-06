@@ -14,24 +14,33 @@ RUN apt-get update && apt-get install -y \
   python3 \
   python3-pip \
   python3-venv \
-  unzip
-# -------------------------  
+  unzip \
+  jq \
+  && apt-get clean
+
+# -------------------------
 # Install Terraform
 # -------------------------
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
-  echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list && \
+  echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+  > /etc/apt/sources.list.d/hashicorp.list && \
   apt-get update && apt-get install -y terraform
 
 # -------------------------
-# Install Ansible
+# Install Ansible + Kubernetes libs (FIX FOR YOUR ERROR)
 # -------------------------
-RUN pip3 install ansible --break-system-packages
+RUN pip3 install --no-cache-dir \
+  ansible \
+  kubernetes \
+  openshift \
+  --break-system-packages
 
 # -------------------------
 # Install kubectl
 # -------------------------
 RUN curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" && \
-  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+  rm kubectl
 
 # -------------------------
 # Install Azure CLI
@@ -39,7 +48,7 @@ RUN curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" && \
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 # -------------------------
-# Install Docker CLI
+# Install Docker CLI (for build/push images if needed)
 # -------------------------
 RUN mkdir -p /etc/apt/keyrings && \
   curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
@@ -49,17 +58,23 @@ RUN mkdir -p /etc/apt/keyrings && \
   $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
   > /etc/apt/sources.list.d/docker.list
 
-RUN apt-get update && apt-get install -y docker-ce-cli
+RUN apt-get update && apt-get install -y docker-ce-cli && apt-get clean
 
 # -------------------------
-# Docker permission
+# Docker permission for Jenkins user
 # -------------------------
-RUN groupadd docker || true
-RUN usermod -aG docker jenkins
+RUN groupadd docker || true && \
+  usermod -aG docker jenkins
 
 # -------------------------
-# Clean
+# Create kube directory (for AKS config if needed)
 # -------------------------
-RUN apt-get clean
+RUN mkdir -p /var/jenkins_home/.kube && \
+  chown -R jenkins:jenkins /var/jenkins_home/.kube
+
+# -------------------------
+# Clean up
+# -------------------------
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER jenkins
