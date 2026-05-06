@@ -3,23 +3,17 @@ pipeline {
 
     environment {
         BE_IMAGE = "pannatronkanla/backend"
-        TAG = "${BUILD_NUMBER}"
+        TAG = "latest"
     }
 
     stages {
 
-        // -------------------------
-        // ✔ Checkout (ต้องใช้ scm เพื่อให้ changeset ทำงานได้)
-        // -------------------------
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // -------------------------
-        // 🧪 TEST (backend change only)
-        // -------------------------
         stage('Test Backend') {
             when {
                 changeset "backend/**"
@@ -44,9 +38,6 @@ pipeline {
             }
         }
 
-        // -------------------------
-        // 🏗 BUILD DOCKER IMAGE
-        // -------------------------
         stage('Docker Build') {
             when {
                 changeset "backend/**"
@@ -54,14 +45,11 @@ pipeline {
 
             steps {
                 sh '''
-                docker build -t $BE_IMAGE:$TAG ./backend
+                docker build -t $BE_IMAGE:latest ./backend
                 '''
             }
         }
 
-        // -------------------------
-        // 📦 PUSH IMAGE
-        // -------------------------
         stage('Push Docker Hub') {
             when {
                 changeset "backend/**"
@@ -75,15 +63,12 @@ pipeline {
                 )]) {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push $BE_IMAGE:$TAG
+                    docker push $BE_IMAGE:latest
                     '''
                 }
             }
         }
 
-        // -------------------------
-        // 🧹 CLEANUP
-        // -------------------------
         stage('Cleanup') {
             steps {
                 sh '''
