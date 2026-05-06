@@ -8,41 +8,30 @@ pipeline {
 
     stages {
 
+        // -------------------------
+        // ✔ Checkout (safe config)
+        // -------------------------
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/D1n0cute/project-server-less.git'
+                    ]],
+                    extensions: [[$class: 'CloneOption', shallow: false]]
+                ])
             }
         }
 
-        // -------------------------------
-        // 🔥 CHANGE DETECTION (FIXED)
-        // -------------------------------
-        stage('Check Frontend Changes') {
-            steps {
-                script {
-                    def changed = sh(
-                        script: """
-                        git fetch origin main
-                        git diff --name-only origin/main...HEAD | grep '^frontend/' || true
-                        """,
-                        returnStdout: true
-                    ).trim()
-
-                    if (!changed) {
-                        echo "No frontend changes → skip build"
-                        currentBuild.result = 'SUCCESS'
-                        return
-                    }
-
-                    echo "Frontend changed:\n${changed}"
-                }
-            }
-        }
-
-        // -------------------------------
-        // 🧪 TEST STAGE
-        // -------------------------------
+        // -------------------------
+        // 🧪 TEST (only if frontend changed)
+        // -------------------------
         stage('Install & Test') {
+            when {
+                changeset "frontend/**"
+            }
+
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -60,15 +49,19 @@ pipeline {
                     npm install
                 fi
 
-                npm run test || echo "No tests or failed tests (ignored)"
+                npm run test || echo "No tests or test failed (ignored)"
                 '''
             }
         }
 
-        // -------------------------------
-        // 🏗 BUILD DOCKER IMAGE (FIXED)
-        // -------------------------------
+        // -------------------------
+        // 🏗 BUILD (only if frontend changed)
+        // -------------------------
         stage('Build Docker Image') {
+            when {
+                changeset "frontend/**"
+            }
+
             steps {
                 sh '''
                 cd frontend
@@ -77,10 +70,14 @@ pipeline {
             }
         }
 
-        // -------------------------------
-        // 📦 PUSH IMAGE (NO latest TAG)
-        // -------------------------------
+        // -------------------------
+        // 📦 PUSH IMAGE
+        // -------------------------
         stage('Push to Docker Hub') {
+            when {
+                changeset "frontend/**"
+            }
+
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
@@ -95,28 +92,31 @@ pipeline {
             }
         }
 
-        // -------------------------------
-        // ☸️ DEPLOY TO K8S (IMPORTANT FIX)
-        // -------------------------------
+        // -------------------------
+        // ☸️ DEPLOY (safe rollout)
+        // -------------------------
         stage('Deploy to Kubernetes') {
+            when {
+                changeset "frontend/**"
+            }
+
             steps {
                 sh '''
                 kubectl set image deployment/frontend \
                     frontend=$FE_IMAGE:$TAG
 
-                kubectl rollout restart deployment frontend
-                kubectl rollout status deployment frontend
+                kubectl rollout status deployment/frontend --timeout=120s
                 '''
             }
         }
 
-        // -------------------------------
+        // -------------------------
         // 🧹 CLEANUP
-        // -------------------------------
+        // -------------------------
         stage('Cleanup') {
             steps {
                 sh '''
-                docker rmi $FE_IMAGE:$TAG || true
+                docker image prune -f || true
                 docker logout || true
                 '''
             }
