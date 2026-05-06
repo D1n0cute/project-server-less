@@ -8,54 +8,65 @@ pipeline {
 
     stages {
 
+        // -------------------------
+        // ✔ Checkout (ต้องใช้ scm เพื่อให้ changeset ทำงานได้)
+        // -------------------------
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+                checkout scm
             }
         }
 
-        // 🔥 ตัวกรองว่า backend มีการเปลี่ยนไหม
-        stage('Check Backend Changes') {
-            steps {
-                script {
-                    def changed = sh(
-                        script: "git diff --name-only HEAD~1 HEAD | grep '^backend/' || true",
-                        returnStdout: true
-                    ).trim()
-
-                    if (!changed) {
-                        currentBuild.result = 'NOT_BUILT'
-                        error("❌ No backend changes → skip pipeline")
-                    } else {
-                        echo "✅ Backend changed:\n${changed}"
-                    }
-                }
-            }
-        }
-
+        // -------------------------
+        // 🧪 TEST (backend change only)
+        // -------------------------
         stage('Test Backend') {
+            when {
+                changeset "backend/**"
+            }
+
             steps {
                 sh '''
                 echo "=== Testing Backend ==="
 
                 cd backend
 
+                if [ -d venv ]; then rm -rf venv; fi
+
                 python3 -m venv venv
                 . venv/bin/activate
 
+                pip install --upgrade pip
                 pip install -r requirements.txt
+
                 pytest
                 '''
             }
         }
 
+        // -------------------------
+        // 🏗 BUILD DOCKER IMAGE
+        // -------------------------
         stage('Docker Build') {
+            when {
+                changeset "backend/**"
+            }
+
             steps {
-                sh "docker build -t $BE_IMAGE:$TAG -t $BE_IMAGE:latest ./backend"
+                sh '''
+                docker build -t $BE_IMAGE:$TAG ./backend
+                '''
             }
         }
 
+        // -------------------------
+        // 📦 PUSH IMAGE
+        // -------------------------
         stage('Push Docker Hub') {
+            when {
+                changeset "backend/**"
+            }
+
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
@@ -65,19 +76,18 @@ pipeline {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
                     docker push $BE_IMAGE:$TAG
-                    docker push $BE_IMAGE:latest
                     '''
                 }
             }
         }
 
+        // -------------------------
+        // 🧹 CLEANUP
+        // -------------------------
         stage('Cleanup') {
             steps {
                 sh '''
-                echo "Cleaning up Docker images..."
-
-                docker rmi $BE_IMAGE:$TAG || true
-                docker rmi $BE_IMAGE:latest || true
+                docker image prune -f || true
                 docker logout || true
                 '''
             }

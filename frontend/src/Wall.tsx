@@ -1,4 +1,3 @@
-// frontend/Wall.tsx
 import { useEffect, useRef, useState, useCallback } from "react";
 import "./Wall.css";
 
@@ -12,9 +11,11 @@ interface Message {
   created_at: string;
 }
 
-/* ── Config ── */
-const API = "/backend/api";
+/* ── API (IMPORTANT FIX) ── */
+// ใช้ /api เท่านั้น (ให้ ingress route /api -> backend)
+const API = "/api";
 
+/* ── Colors ── */
 const COLORS = [
   { bg: "rgba(124,92,191,0.35)", text: "#e2d4ff", border: "rgba(167,139,250,0.4)" },
   { bg: "rgba(56,189,248,0.25)", text: "#bae6fd", border: "rgba(56,189,248,0.35)" },
@@ -38,7 +39,7 @@ function showToast(msg: string) {
   el.className = "toast";
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  setTimeout(() => el.remove(), 3000);
 }
 
 /* ── Component ── */
@@ -48,69 +49,87 @@ export default function Wall() {
   const [sending, setSending] = useState(false);
   const colorCounter = useRef(0);
 
-  /* Fetch all messages on mount */
+  /* ── Fetch messages ── */
   useEffect(() => {
     fetch(`${API}/messages`)
       .then((r) => r.json())
-      .then((data: Message[]) => setMessages(data))
+      .then((data) => {
+        // 🔥 กันพัง: ต้องเป็น array เท่านั้น
+        const list = Array.isArray(data) ? data : [];
+        setMessages(list);
+      })
       .catch(() => showToast("ไม่สามารถโหลดข้อความได้"));
   }, []);
 
-  /* Render a bubble for each message */
+  /* ── Render bubble ── */
   const renderBubble = useCallback((msg: Message, animate = true) => {
     const wall = document.getElementById("wall");
     if (!wall) return;
 
     const c = COLORS[msg.color_idx % COLORS.length];
+
     const el = document.createElement("div");
     el.className = "msg-bubble";
     el.textContent = msg.content;
+
     el.style.cssText = `
       left: ${msg.pos_x}%;
-      top:  ${msg.pos_y}%;
+      top: ${msg.pos_y}%;
       background: ${c.bg};
       color: ${c.text};
       border: 1px solid ${c.border};
       animation: ${animate ? "floatIn 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none"};
-      opacity: ${animate ? "0" : "0.82"};
+      opacity: ${animate ? "0" : "0.85"};
     `;
+
     wall.appendChild(el);
 
     if (animate) {
-      el.addEventListener("animationend", () => {
-        el.style.opacity = "0.82";
-        el.style.animation = "none";
-      }, { once: true });
+      el.addEventListener(
+        "animationend",
+        () => {
+          el.style.opacity = "0.85";
+          el.style.animation = "none";
+        },
+        { once: true }
+      );
     }
   }, []);
 
-  /* Render existing messages (no animation) */
+  /* ── Render existing messages ── */
   useEffect(() => {
     messages.forEach((m) => renderBubble(m, false));
   }, [messages, renderBubble]);
 
-  /* Stars */
+  /* ── Stars ── */
   useEffect(() => {
     const container = document.getElementById("stars");
     if (!container || container.childElementCount > 0) return;
+
     for (let i = 0; i < 90; i++) {
       const s = document.createElement("div");
       s.className = "star";
-      s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;--d:${1.5 + Math.random() * 3}s;`;
+      s.style.cssText = `
+        left:${Math.random() * 100}%;
+        top:${Math.random() * 100}%;
+        --d:${1.5 + Math.random() * 3}s;
+      `;
       container.appendChild(s);
     }
   }, []);
 
-  /* Send message */
+  /* ── Send message ── */
   const handleSend = async () => {
     const content = text.trim();
     if (!content) return;
 
     const color_idx = colorCounter.current % COLORS.length;
     colorCounter.current++;
+
     const { pos_x, pos_y } = randomPos();
 
     setSending(true);
+
     try {
       const res = await fetch(`${API}/messages`, {
         method: "POST",
@@ -119,13 +138,14 @@ export default function Wall() {
       });
 
       if (!res.ok) throw new Error();
+
       const saved: Message = await res.json();
 
       renderBubble(saved, true);
       setMessages((prev) => [...prev, saved]);
       setText("");
     } catch {
-      showToast("ส่งข้อความไม่สำเร็จ กรุณาลองใหม่");
+      showToast("ส่งข้อความไม่สำเร็จ");
     } finally {
       setSending(false);
     }
@@ -147,23 +167,29 @@ export default function Wall() {
         <div className="card">
           <h2 className="card-title">ส่งกำลังใจให้โลก</h2>
           <p className="card-sub">
-            พิมพ์ข้อความกำลังใจ แล้วมันจะลอยอยู่บนกำแพงนี้ตลอดไป
+            พิมพ์ข้อความ แล้วมันจะลอยอยู่บนกำแพง
           </p>
 
           <textarea
             id="msg-input"
-            placeholder="วันนี้คุณทำได้ดีมากแล้ว....:3"
+            placeholder="วันนี้คุณเก่งมากแล้ว :3"
             maxLength={80}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKey}
           />
 
-          <button id="send-btn" onClick={handleSend} disabled={sending || !text.trim()}>
-            {sending ? "กำลังส่ง...:3" : "ส่งออกไป ✦"}
+          <button
+            id="send-btn"
+            onClick={handleSend}
+            disabled={sending || !text.trim()}
+          >
+            {sending ? "กำลังส่ง..." : "ส่ง ✦"}
           </button>
 
-          <p className="count-label">{messages.length} ข้อความบนกำแพง</p>
+          <p className="count-label">
+            {messages.length} ข้อความ
+          </p>
         </div>
       </div>
     </>

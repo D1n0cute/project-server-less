@@ -92,23 +92,7 @@ pipeline {
             }
         }
 
-        // -------------------------
-        // ☸️ DEPLOY (safe rollout)
-        // -------------------------
-        stage('Deploy to Kubernetes') {
-            when {
-                changeset "frontend/**"
-            }
 
-            steps {
-                sh '''
-                kubectl set image deployment/frontend \
-                    frontend=$FE_IMAGE:$TAG
-
-                kubectl rollout status deployment/frontend --timeout=120s
-                '''
-            }
-        }
 
         // -------------------------
         // 🧹 CLEANUP

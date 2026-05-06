@@ -1,4 +1,3 @@
-# backend/main.py
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -11,10 +10,8 @@ from models import Message
 from schemas import MessageCreate, MessageOut
 
 
-# testing somting with comment
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # สร้าง table อัตโนมัติถ้ายังไม่มี
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -26,9 +23,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ✔ FIX CORS FOR PRODUCTION
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://20.247.47.135",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,43 +38,42 @@ app.add_middleware(
 
 @app.get("/", tags=["Health"])
 async def root():
-    return {"status": "ok", "message": "Encouragement Wall is running ✨"}
+    return {"status": "ok"}
 
 
-@app.get("/api/messages", response_model=list[MessageOut], tags=["Messages"])
+@app.get("/api/messages", response_model=list[MessageOut])
 async def get_messages(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Message).order_by(Message.id))
     return result.scalars().all()
 
 
-@app.post(
-    "/api/messages", response_model=MessageOut, status_code=201, tags=["Messages"]
-)
+@app.post("/api/messages", response_model=MessageOut, status_code=201)
 async def create_message(body: MessageCreate, db: AsyncSession = Depends(get_db)):
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     msg = Message(
         content=body.content,
         color_idx=body.color_idx,
         pos_x=body.pos_x,
         pos_y=body.pos_y,
-        created_at=now,
+        created_at=datetime.now(timezone.utc),
     )
+
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
     return msg
 
 
-@app.get("/api/messages/count", tags=["Messages"])
+@app.get("/api/messages/count")
 async def get_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count()).select_from(Message))
     return {"count": result.scalar()}
 
 
-@app.delete("/api/messages/{msg_id}", status_code=204, tags=["Messages"])
+@app.delete("/api/messages/{msg_id}", status_code=204)
 async def delete_message(msg_id: int, db: AsyncSession = Depends(get_db)):
     msg = await db.get(Message, msg_id)
     if not msg:
         raise HTTPException(status_code=404, detail="ไม่พบข้อความนี้")
     await db.delete(msg)
     await db.commit()
+
