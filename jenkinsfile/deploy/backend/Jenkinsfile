@@ -84,7 +84,7 @@ pipeline {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory/prod playbooks/ingress.yml
-                kubectl rollout restart deployment ingress
+                kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
                 '''
             }
         }
