@@ -1,0 +1,30 @@
+# ใช้ Python image แบบ lightweight
+FROM python:3.11-slim
+
+# ป้องกัน Python เขียน .pyc และ buffer log
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# ตั้ง working directory
+WORKDIR /app
+
+# ติดตั้ง dependencies ของระบบ (เผื่อ sqlite + build lib)
+RUN apt-get update && apt-get install -y \
+  gcc \
+  sqlite3 \
+  && rm -rf /var/lib/apt/lists/*
+
+# copy requirements ก่อน (เพื่อ cache layer)
+COPY requirements.txt .
+
+# install python packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# copy source code
+COPY . .
+
+# expose port (FastAPI default)
+EXPOSE 8000
+
+# run app (แก้ตามชื่อไฟล์/instance)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

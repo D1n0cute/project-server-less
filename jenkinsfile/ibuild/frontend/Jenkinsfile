@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    environment {
+        FE_IMAGE = "pannatronkanla/frontend"
+        TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+            }
+        }
+
+        stage('Install & Test') {
+            steps {
+                sh '''
+                cd frontend
+
+                # install dependencies (stable for CI)
+                npm ci
+
+                # run test
+                npm run test
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -t $FE_IMAGE:$TAG -t $FE_IMAGE:latest ./frontend
+                '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $FE_IMAGE:$TAG
+                    docker push $FE_IMAGE:latest
+                    '''
+                }
+            }
+        }
+    }
+}

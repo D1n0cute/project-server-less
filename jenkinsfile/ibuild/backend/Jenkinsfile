@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        BE_IMAGE = "pannatronkanla/backend"
+        TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                cd backend
+                python -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                pytest
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh "docker build -t $BE_IMAGE:$TAG -t $BE_IMAGE:latest ./backend"
+            }
+        }
+
+        stage('Push Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $BE_IMAGE:$TAG
+                    docker push $BE_IMAGE:latest
+                    '''
+                }
+            }
+        }
+
+    }
+}
