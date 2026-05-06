@@ -29,10 +29,17 @@ pipeline {
             }
         }
 
+        stage('Terraform Init') {
+            steps {
+                sh '''
+                terraform -chdir=terraform init -reconfigure
+                '''
+            }
+        }
+
         stage('Terraform Apply') {
             steps {
                 sh '''
-                terraform -chdir=terraform init
                 terraform -chdir=terraform apply -auto-approve
                 '''
             }

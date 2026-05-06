@@ -12,11 +12,10 @@ provider "azurerm" {
 }
 
 # -------------------------
-# Resource Group
+# EXISTING Resource Group (FIX)
 # -------------------------
-resource "azurerm_resource_group" "rg" {
-  name     = "aks-rg"
-  location = "eastasia"
+data "azurerm_resource_group" "rg" {
+  name = "aks-rg"
 }
 
 # -------------------------
@@ -24,8 +23,8 @@ resource "azurerm_resource_group" "rg" {
 # -------------------------
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "my-aks-cluster"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
   dns_prefix          = "myaks"
 
   default_node_pool {
@@ -39,11 +38,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   network_profile {
-    network_plugin     = "azure"
-    load_balancer_sku  = "standard"
+    network_plugin    = "azure"
+    load_balancer_sku = "standard"
   }
 
-  # 🔥 FIX HERE
   oidc_issuer_enabled = true
 
   tags = {
@@ -52,7 +50,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 }
 
 # -------------------------
-# Output (ใช้กับ Ansible / kubectl)
+# Outputs
 # -------------------------
 output "kube_config" {
   value     = azurerm_kubernetes_cluster.aks.kube_config_raw
@@ -64,5 +62,5 @@ output "cluster_name" {
 }
 
 output "resource_group" {
-  value = azurerm_resource_group.rg.name
+  value = data.azurerm_resource_group.rg.name
 }
