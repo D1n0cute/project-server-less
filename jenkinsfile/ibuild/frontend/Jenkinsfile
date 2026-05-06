@@ -86,7 +86,7 @@ pipeline {
                 )]) {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push $FE_IMAGE:$TAG
+                    docker push $FE_IMAGE:latest
                     '''
                 }
             }
