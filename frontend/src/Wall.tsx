@@ -13,7 +13,7 @@ interface Message {
 }
 
 /* ── Config ── */
-const API = "http://localhost:8000/api";
+const API = "/backend/api";
 
 const COLORS = [
   { bg: "rgba(124,92,191,0.35)", text: "#e2d4ff", border: "rgba(167,139,250,0.4)" },
