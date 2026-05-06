@@ -12,3 +12,9 @@ docker run -it mcr.microsoft.com/azure-cli
 az group delete --name my-devops-rg --yes
 
 az network bastion show --name my-bastion --resource-group my-devops-rg --query provisioningState
+
+az aks delete \
+  --name my-aks-cluster \
+  --resource-group aks-rg \
+  --yes \
+  --no-wait
