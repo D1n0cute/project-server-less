@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                sh '''
+                cd terraform
+                terraform init
+                terraform apply -auto-approve
+                '''
+            }
+        }
+        stage('Deploy Backend') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh '''
+                    mkdir -p ~/.kube
+                    cp $KUBECONFIG_FILE ~/.kube/config
+
+                    cd ansible
+                    ansible-playbook -i inventory/prod playbooks/backend.yml
+                    '''
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+- name: Pull backend image
+  docker_image:
+    name: my-backend
+    source: pull
+
+- name: Run backend container
+  docker_container:
+    name: backend
+    image: my-backend:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "8000:8000"

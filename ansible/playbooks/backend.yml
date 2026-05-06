@@ -1,0 +1,9 @@
+- name: Deploy Backend to AKS
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Apply backend deployment
+      kubernetes.core.k8s:
+        state: present
+        src: ../k8s/backend.yaml

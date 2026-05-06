@@ -1,0 +1,9 @@
+- name: Deploy Frontend to AKS
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Apply frontend deployment
+      kubernetes.core.k8s:
+        state: present
+        src: ../k8s/frontend.yaml
