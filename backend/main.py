@@ -66,7 +66,7 @@ async def create_message(body: MessageCreate, db: AsyncSession = Depends(get_db)
 @app.get("/api/messages/count")
 async def get_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count()).select_from(Message))
-    return {"count": 20}
+    return {"count": result.scalar()}
 
 
 @app.delete("/api/messages/{msg_id}", status_code=204)
