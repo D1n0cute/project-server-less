@@ -18,7 +18,7 @@ pipeline {
             steps {
                 sh '''
                 echo "=== Testing Frontend ==="
-
+                ls -la frontend
                 docker run --rm \
                   -v $(pwd)/frontend:/app \
                   -w /app \
