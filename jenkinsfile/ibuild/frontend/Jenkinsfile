@@ -17,13 +17,16 @@ pipeline {
         stage('Install & Test') {
             steps {
                 sh '''
-                cd frontend
+                echo "=== Testing Frontend ==="
 
-                # install dependencies (stable for CI)
-                npm ci
-
-                # run test
-                npm run test
+                docker run --rm \
+                  -v $(pwd)/frontend:/app \
+                  -w /app \
+                  node:20-alpine \
+                  sh -c "
+                    npm ci &&
+                    npm run test
+                  "
                 '''
             }
         }
