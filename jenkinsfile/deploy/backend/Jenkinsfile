@@ -49,11 +49,12 @@ pipeline {
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Deploy Backend') {
             steps {
                 sh '''
+                mkdir -p ~/.kube
                 cd ansible
-                ansible-playbook -i inventory/prod playbooks/frontend.yml
+                ansible-playbook -i inventory/prod playbooks/backend.yml
                 '''
             }
         }
