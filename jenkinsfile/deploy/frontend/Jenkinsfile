@@ -47,6 +47,7 @@ pipeline {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory/prod playbooks/frontend.yml
+                kubectl rollout restart deployment frontend
                 '''
             }
         }

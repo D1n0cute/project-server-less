@@ -165,7 +165,7 @@ export default function Wall() {
 
       <div className="overlay">
         <div className="card">
-          <h2 className="card-title">ส่งกำลังใจให้โลก ABABAB</h2>
+          <h2 className="card-title">ส่งกำลังใจให้โลก</h2>
           <p className="card-sub">
             พิมพ์ข้อความ แล้วมันจะลอยอยู่บนกำแพง
           </p>
