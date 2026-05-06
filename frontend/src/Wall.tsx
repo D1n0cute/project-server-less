@@ -145,7 +145,7 @@ export default function Wall() {
       setMessages((prev) => [...prev, saved]);
       setText("");
     } catch {
-      showToast("ส่งข้อความไม่สำเร็จ AAAA");
+      showToast("ส่งข้อความไม่สำเร็จ");
     } finally {
       setSending(false);
     }
