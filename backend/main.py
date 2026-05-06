@@ -38,7 +38,7 @@ app.add_middleware(
 
 @app.get("/", tags=["Health"])
 async def root():
-    return {"status": "ok"}
+    return {"status": "Oj"}
 
 
 @app.get("/api/messages", response_model=list[MessageOut])
@@ -66,7 +66,7 @@ async def create_message(body: MessageCreate, db: AsyncSession = Depends(get_db)
 @app.get("/api/messages/count")
 async def get_count(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count()).select_from(Message))
-    return {"count": result.scalar()}
+    return {"count": result.scalar() + 20}
 
 
 @app.delete("/api/messages/{msg_id}", status_code=204)
@@ -76,4 +76,3 @@ async def delete_message(msg_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="ไม่พบข้อความนี้")
     await db.delete(msg)
     await db.commit()
-
