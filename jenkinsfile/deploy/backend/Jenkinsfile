@@ -28,6 +28,7 @@ pipeline {
                 '''
             }
         }
+
         stage('Terraform Apply') {
             steps {
                 sh '''
@@ -52,6 +53,18 @@ pipeline {
             steps {
                 sh '''
                 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+                '''
+            }
+        }
+
+        # 🔥 FIX สำคัญ
+        stage('Wait Ingress Controller Ready') {
+            steps {
+                sh '''
+                kubectl wait -n ingress-nginx \
+                  --for=condition=ready pod \
+                  --selector=app.kubernetes.io/component=controller \
+                  --timeout=180s
                 '''
             }
         }
