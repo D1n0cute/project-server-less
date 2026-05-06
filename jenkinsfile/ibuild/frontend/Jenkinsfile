@@ -14,31 +14,34 @@ pipeline {
             }
         }
 
-        // 🔥 ตรวจว่า frontend มีการเปลี่ยนไหม
+        // -------------------------------
+        // 🔥 CHANGE DETECTION (FIXED)
+        // -------------------------------
         stage('Check Frontend Changes') {
             steps {
                 script {
                     def changed = sh(
                         script: """
-                        if git rev-parse HEAD~1 >/dev/null 2>&1; then
-                            git diff --name-only HEAD~1 HEAD | grep '^frontend/' || true
-                        else
-                            echo "first-build"
-                        fi
+                        git fetch origin main
+                        git diff --name-only origin/main...HEAD | grep '^frontend/' || true
                         """,
                         returnStdout: true
                     ).trim()
 
                     if (!changed) {
-                        currentBuild.result = 'NOT_BUILT'
-                        error("❌ No frontend changes → skip pipeline")
-                    } else {
-                        echo "✅ Frontend changed:\\n${changed}"
+                        echo "No frontend changes → skip build"
+                        currentBuild.result = 'SUCCESS'
+                        return
                     }
+
+                    echo "Frontend changed:\n${changed}"
                 }
             }
         }
 
+        // -------------------------------
+        // 🧪 TEST STAGE
+        // -------------------------------
         stage('Install & Test') {
             agent {
                 docker {
@@ -46,31 +49,37 @@ pipeline {
                     args '-u root'
                 }
             }
+
             steps {
                 sh '''
-                echo "=== Testing Frontend ==="
                 cd frontend
 
-                # 🔥 fallback กัน npm ci พัง
                 if [ -f package-lock.json ]; then
                     npm ci
                 else
                     npm install
                 fi
 
-                npm run test || echo "⚠️ no tests or test failed (ignored)"
+                npm run test || echo "No tests or failed tests (ignored)"
                 '''
             }
         }
 
+        // -------------------------------
+        // 🏗 BUILD DOCKER IMAGE (FIXED)
+        // -------------------------------
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $FE_IMAGE:$TAG -t $FE_IMAGE:latest ./frontend
+                cd frontend
+                docker build -t $FE_IMAGE:$TAG .
                 '''
             }
         }
 
+        // -------------------------------
+        // 📦 PUSH IMAGE (NO latest TAG)
+        // -------------------------------
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -81,19 +90,33 @@ pipeline {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
                     docker push $FE_IMAGE:$TAG
-                    docker push $FE_IMAGE:latest
                     '''
                 }
             }
         }
 
+        // -------------------------------
+        // ☸️ DEPLOY TO K8S (IMPORTANT FIX)
+        // -------------------------------
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                kubectl set image deployment/frontend \
+                    frontend=$FE_IMAGE:$TAG
+
+                kubectl rollout restart deployment frontend
+                kubectl rollout status deployment frontend
+                '''
+            }
+        }
+
+        // -------------------------------
+        // 🧹 CLEANUP
+        // -------------------------------
         stage('Cleanup') {
             steps {
                 sh '''
-                echo "Cleaning up Docker images..."
-
                 docker rmi $FE_IMAGE:$TAG || true
-                docker rmi $FE_IMAGE:latest || true
                 docker logout || true
                 '''
             }
