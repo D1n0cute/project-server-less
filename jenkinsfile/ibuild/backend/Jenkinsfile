@@ -13,35 +13,21 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/D1n0cute/project-server-less.git'
             }
         }
-
         stage('Test Backend') {
             steps {
                 sh '''
                 echo "=== Testing Backend ==="
 
-                echo "Current dir:"
-                pwd
+                cd backend
 
-                echo "List root:"
-                ls -la
+                python3 -m venv venv
+                . venv/bin/activate
 
-                echo "List backend:"
-                ls -la backend || true
-
-                docker run --rm \
-                  -v $(pwd):/app \
-                  -w /app/backend \
-                  python:3.11-slim \
-                  sh -c "
-                    echo 'Inside container:';
-                    pwd;
-                    ls -la;
-                    pip install -r requirements.txt &&
-                    pytest
-                  "
+                pip install -r requirements.txt
+                pytest
                 '''
             }
-        }
+        }        
         stage('Docker Build') {
             steps {
                 sh "docker build -t $BE_IMAGE:$TAG -t $BE_IMAGE:latest ./backend"
