@@ -18,13 +18,15 @@ pipeline {
             steps {
                 sh '''
                 echo "Testing Backend..."
-                docker run --rm -v $(pwd)/backend:/app -w /app python:3.11-slim sh -c "
-                    pip install -r requirements.txt &&
-                    pytest
-                "
+                
+                docker run --rm \
+                  -v $(pwd)/backend:/app \
+                  -w /app \
+                  python:3.11-slim \
+                  sh -c "ls -la && pip install -r requirements.txt && pytest"
                 '''
             }
-        }    
+        }
 
         stage('Docker Build') {
             steps {
