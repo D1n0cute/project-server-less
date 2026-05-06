@@ -16,11 +16,11 @@ interface Message {
 const API = "http://localhost:8000/api";
 
 const COLORS = [
-  { bg: "rgba(124,92,191,0.35)",  text: "#e2d4ff", border: "rgba(167,139,250,0.4)"  },
-  { bg: "rgba(56,189,248,0.25)",  text: "#bae6fd", border: "rgba(56,189,248,0.35)"  },
+  { bg: "rgba(124,92,191,0.35)", text: "#e2d4ff", border: "rgba(167,139,250,0.4)" },
+  { bg: "rgba(56,189,248,0.25)", text: "#bae6fd", border: "rgba(56,189,248,0.35)" },
   { bg: "rgba(244,114,182,0.25)", text: "#fbcfe8", border: "rgba(244,114,182,0.35)" },
-  { bg: "rgba(52,211,153,0.25)",  text: "#a7f3d0", border: "rgba(52,211,153,0.35)"  },
-  { bg: "rgba(251,191,36,0.2)",   text: "#fde68a", border: "rgba(251,191,36,0.35)"  },
+  { bg: "rgba(52,211,153,0.25)", text: "#a7f3d0", border: "rgba(52,211,153,0.35)" },
+  { bg: "rgba(251,191,36,0.2)", text: "#fde68a", border: "rgba(251,191,36,0.35)" },
   { bg: "rgba(251,113,133,0.25)", text: "#fecdd3", border: "rgba(251,113,133,0.35)" },
 ];
 
@@ -43,10 +43,10 @@ function showToast(msg: string) {
 
 /* ── Component ── */
 export default function Wall() {
-  const [messages, setMessages]   = useState<Message[]>([]);
-  const [text, setText]           = useState("");
-  const [sending, setSending]     = useState(false);
-  const colorCounter              = useRef(0);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const colorCounter = useRef(0);
 
   /* Fetch all messages on mount */
   useEffect(() => {
@@ -61,8 +61,8 @@ export default function Wall() {
     const wall = document.getElementById("wall");
     if (!wall) return;
 
-    const c   = COLORS[msg.color_idx % COLORS.length];
-    const el  = document.createElement("div");
+    const c = COLORS[msg.color_idx % COLORS.length];
+    const el = document.createElement("div");
     el.className = "msg-bubble";
     el.textContent = msg.content;
     el.style.cssText = `
@@ -152,7 +152,7 @@ export default function Wall() {
 
           <textarea
             id="msg-input"
-            placeholder="วันนี้คุณทำได้ดีมากแล้ว..."
+            placeholder="วันนี้คุณทำได้ดีมากแล้ว....:3"
             maxLength={80}
             value={text}
             onChange={(e) => setText(e.target.value)}
