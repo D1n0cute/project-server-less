@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         FE_IMAGE = "pannatronkanla/frontend"
-        TAG = "${BUILD_NUMBER}"
+        TAG = "latest"
     }
 
     stages {
 
         // -------------------------
-        // ✔ Checkout (safe config)
+        // ✔ Checkout
         // -------------------------
         stage('Checkout') {
             steps {
@@ -25,7 +25,7 @@ pipeline {
         }
 
         // -------------------------
-        // 🧪 TEST (only if frontend changed)
+        // 🧪 TEST (only frontend changed)
         // -------------------------
         stage('Install & Test') {
             when {
@@ -55,7 +55,7 @@ pipeline {
         }
 
         // -------------------------
-        // 🏗 BUILD (only if frontend changed)
+        // 🏗 BUILD
         // -------------------------
         stage('Build Docker Image') {
             when {
@@ -71,7 +71,7 @@ pipeline {
         }
 
         // -------------------------
-        // 📦 PUSH IMAGE
+        // 📦 PUSH
         // -------------------------
         stage('Push to Docker Hub') {
             when {
@@ -86,13 +86,11 @@ pipeline {
                 )]) {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push $FE_IMAGE:latest
+                    docker push $FE_IMAGE:$TAG
                     '''
                 }
             }
         }
-
-
 
         // -------------------------
         // 🧹 CLEANUP
