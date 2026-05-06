@@ -160,7 +160,7 @@ export default function Wall() {
           />
 
           <button id="send-btn" onClick={handleSend} disabled={sending || !text.trim()}>
-            {sending ? "กำลังส่ง..." : "ส่งออกไป ✦"}
+            {sending ? "กำลังส่ง...:3" : "ส่งออกไป ✦"}
           </button>
 
           <p className="count-label">{messages.length} ข้อความบนกำแพง</p>
