@@ -39,9 +39,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   network_profile {
-    network_plugin = "azure"
-    load_balancer_sku = "standard"
+    network_plugin     = "azure"
+    load_balancer_sku  = "standard"
   }
+
+  # 🔥 FIX HERE
+  oidc_issuer_enabled = true
 
   tags = {
     environment = "dev"
