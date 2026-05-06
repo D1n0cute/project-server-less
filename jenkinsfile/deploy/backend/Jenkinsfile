@@ -28,7 +28,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Terraform Apply') {
             steps {
                 sh '''
@@ -38,7 +37,7 @@ pipeline {
             }
         }
 
-        stage('Get kubeconfig from AKS') {
+        stage('Get kubeconfig') {
             steps {
                 sh '''
                 az aks get-credentials \
@@ -48,20 +47,29 @@ pipeline {
                 '''
             }
         }
-        stage('Deploy Ingress') {
+
+        stage('Bootstrap Ingress Controller') {
+            steps {
+                sh '''
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+                '''
+            }
+        }
+
+        stage('Deploy Backend') {
+            steps {
+                sh '''
+                cd ansible
+                ansible-playbook -i inventory/prod playbooks/backend.yml
+                '''
+            }
+        }
+
+        stage('Deploy Ingress Rules') {
             steps {
                 sh '''
                 cd ansible
                 ansible-playbook -i inventory/prod playbooks/ingress.yml
-                '''
-            }
-        }
-        stage('Deploy Backend') {
-            steps {
-                sh '''
-                mkdir -p ~/.kube
-                cd ansible
-                ansible-playbook -i inventory/prod playbooks/backend.yml
                 '''
             }
         }
