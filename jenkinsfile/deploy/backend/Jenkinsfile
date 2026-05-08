@@ -91,6 +91,7 @@ pipeline {
         stage('Deploy Monitoring') {
             steps {
                 script {
+                    sh 'kubectl apply -f monitoring/namespace.yaml'
                     sh 'kubectl create configmap prometheus-config --from-file=monitoring/prometheus.yml --dry-run=client -o yaml | kubectl apply -f -'
 
                     dir('monitoring') {

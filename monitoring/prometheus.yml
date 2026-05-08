@@ -12,10 +12,10 @@ scrape_configs:
   - job_name: 'fastapi-backend'
     metrics_path: '/metrics' # Path ที่เราตั้งไว้ใน main.py
     static_configs:
-      - targets: ['backend-service:8000'] 
-        # 'backend-service' คือชื่อ Service ใน Kubernetes ของคุณ
+      - targets: ['backend:8000']
+        # 'backend' คือชื่อ Service ใน Kubernetes ของคุณ
 
   # 3. ติดตาม Frontend (ถ้าคุณใช้ Nginx Exporter)
   - job_name: 'frontend-nginx'
     static_configs:
-      - targets: ['frontend-service:80']
+      - targets: ['frontend:80']
