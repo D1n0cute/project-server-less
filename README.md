@@ -156,10 +156,7 @@ az aks get-credentials \
 
 ### 6. ดู IP ของ Cluster
 ```bash
-az aks get-credentials \
-  -g aks-rg \
-  -n my-aks-cluster \
-  --overwrite-existing
+kubectl get svc -n ingress-nginx
 ```
 
 ---
@@ -169,7 +166,11 @@ az aks get-credentials \
 ### ลำดับการทำงานของ Pipeline
 
 ```
-Checkout ──▶ Build ──▶ Test ──▶ Docker Build ──▶ Push to Hub ──▶ Deploy
+Pipeline ที่ 1 (Backend-Build) : Checkout SCM ──▶ Checkout ──▶ Test Backend ──▶ Docker Build ──▶ Push Docker Hub ──▶ Cleanup
+Pipeline ที่ 2 (Deploy-Backend) : Checkout SCM ──▶ Checkout ──▶ Azure Login ──▶ Terraform Apply ──▶ Get Kubeconfig ──▶ Bootstrap Ingress Controller ──▶ Wait Ingress Controller Ready ──▶ Deploy Backend ──▶ Deploy Ingress Rules
+Pipeline ที่ 3 (Frontend-Build) : Checkout SCM ──▶ Checkout ──▶ Install&Test ──▶ Build Docker Image ──▶ Push To Docker Hub ──▶ Cleanup
+Pipeline ที่ 4 (Frontend-Deploy) : Checkout SCM ──▶ Checkout ──▶ Azure Login ──▶ Get Kubecconfig From AKS ──▶ Deploy Frontend
+
 ```
 
 | Stage | คำอธิบาย |
@@ -183,10 +184,12 @@ Checkout ──▶ Build ──▶ Test ──▶ Docker Build ──▶ Push to
 
 ### วิธีตั้งค่า Jenkins
 1. ติดตั้ง Jenkins และเปิดที่ `http://localhost:8080`
-2. ติดตั้ง plugin: **Git**, **Pipeline**, **Docker Pipeline**
-3. เพิ่ม credentials สำหรับ Docker Hub (ชื่อ `dockerhub-credentials`)
-4. สร้าง Pipeline job ใหม่ และชี้ไปที่ repository นี้
-5. ตั้งค่า Webhook ใน GitHub:
+2. ติดตั้ง plugin: **Git**, **Pipeline**, **Docker Pipeline**, **Agent Docker**
+3. เพิ่ม credentials สำหรับ Docker Hub 
+4. เพิ่ม credentials สำหรับ Azure
+5. สร้าง Pipeline job ใหม่ และชี้ไปที่ repository นี้
+6. รัน ngrok เพื่อให้ได้ Playload 
+7. ตั้งค่า Webhook ใน GitHub:
    - ไปที่ **Settings → Webhooks → Add webhook**
    - Payload URL: `http://[jenkins-host]:8080/github-webhook/`
    - Content type: `application/json`
@@ -200,19 +203,24 @@ Checkout ──▶ Build ──▶ Test ──▶ Docker Build ──▶ Push to
 ```bash
 cd terraform
 terraform init      # ดาวน์โหลด provider plugins
-terraform plan      # ตรวจสอบว่าจะสร้างอะไรบ้าง
 terraform apply     # สร้าง resource จริง
 ```
-> **สิ่งที่ Terraform สร้าง:** [อธิบาย เช่น Docker network, Kubernetes namespace, local directory]
+> **สิ่งที่ Terraform สร้าง:** Cluster, Resource group ของ Azure
 
 ### Ansible — Configure Environment
 ```bash
 cd ansible
 ansible-playbook -i inventory playbook.yml
+ansible-playbook -i inventory/prod playbooks/backend.yml
+kubectl rollout restart deployment backend
+ansible-playbook -i inventory/prod playbooks/ingress.yml
+kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+ansible-playbook -i inventory/prod playbooks/frontend.yml
+kubectl rollout restart deployment frontend
 ```
-> **สิ่งที่ Ansible ทำ:** [อธิบาย เช่น ติดตั้ง kubectl, copy kubeconfig, ตั้งค่า environment variable]
+> **สิ่งที่ Ansible ทำ:** Apply Backend & Frontend , Ingress Controller
 
-> ⚠️ **หมายเหตุ:** ใน pipeline จริง Jenkins จะเรียก Terraform และ Ansible อัตโนมัติในขั้นตอน Deploy ไม่ต้องรันด้วยมือ
+> ⚠️ **หมายเหตุ:** ใน Pipeline จริง Jenkins จะเรียก Terraform และ Ansible อัตโนมัติในขั้นตอน Deploy ไม่ต้องรันด้วยมือ
 
 ---
 
@@ -220,30 +228,38 @@ ansible-playbook -i inventory playbook.yml
 
 ### Apply Manifests ด้วยตัวเอง
 ```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/frontend.yaml
 ```
 
 ### ตรวจสอบสถานะ
 ```bash
-kubectl get pods -n [namespace]
-kubectl get svc  -n [namespace]
+kubectl get pods
+kubectl get svc  
 ```
 
 ### ผลลัพธ์ที่ควรจะได้
 ```
+[narukami47@archlinux project-server-less]$ kubectl get pod
 NAME                        READY   STATUS    RESTARTS   AGE
-[app-name]-xxxxxxxxx-xxxxx  1/1     Running   0          2m
-[app-name]-xxxxxxxxx-yyyyy  1/1     Running   0          2m
-
-NAME            TYPE       CLUSTER-IP     PORT(S)          AGE
-[app-name]-svc  NodePort   10.96.xx.xxx   5000:30080/TCP   2m
+backend-59dbb79c95-6kv7r    1/1     Running   0          56m
+frontend-547c59bd86-dxjr9   1/1     Running   0          51m
+frontend-547c59bd86-p7hbf   1/1     Running   0          51m
+[narukami47@archlinux project-server-less]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+backend      ClusterIP   10.0.197.109   <none>        8000/TCP   56m
+frontend     ClusterIP   10.0.42.13     <none>        80/TCP     52m
+kubernetes   ClusterIP   10.0.0.1       <none>        443/TCP    59m
+[narukami47@archlinux project-server-less]$
+10.0.197.109
 ```
 
 ### เข้าถึงแอปพลิเคชัน
 ```
-http://localhost:30080
+http://20.239.20.37/
 ```
+> ⚠️ **หมายเหตุ:** IP จะเปลี่ยนทุกครั้งที่สร้าง Cluster ใหม่ 
+
 
 ---
 
@@ -302,33 +318,23 @@ feature/*   ──── พัฒนา feature แต่ละอัน (เ�
 |--------|----------|----------|
 | `GET` | `/` | Health check — ตรวจว่าแอปยังรันอยู่ |
 | `GET` | `/metrics` | Prometheus metrics endpoint |
-| `GET` | `/[resource]` | [อธิบาย] |
-| `POST` | `/[resource]` | [อธิบาย] |
-| `DELETE` | `/[resource]/:id` | [อธิบาย] |
+| `GET` | `/api/messages` | ดึงรายการข้อความให้กำลังใจทั้งหมดจากฐานข้อมูล เรียงตาม ID |
+| `GET` | `/api/messages/count` | นับจำนวนข้อความทั้งหมดที่ถูกเขียนบนกำแพง |
+| `POST` | `/api/messages` | บันทึกข้อความใหม่ลงฐานข้อมูล พร้อมระบุสี ตำแหน่ง และเวลาที่สร้าง |
+| `DELETE` | `/api/messages/{msg_id}` | ลบข้อความที่ไม่ต้องการออกจากระบบ โดยระบุผ่าน ID |
 
 ---
 
 ## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
 
-**Pods ค้างอยู่ที่ `Pending` ไม่ยอม Running**
-```bash
-kubectl describe pod [pod-name] -n [namespace]
-# ดูที่ Events: อาจเกิดจาก resource ไม่พอ หรือ image pull error
+**Jenkins Container**
+```
+ทุกครั้งที่เพิ่ม Tech Stack ต้องเพิ่ม Dependencies ให้ Jenkins Container
 ```
 
-**Jenkins pipeline ล้มเหลวตอน Docker Build**
-```bash
-# ตรวจว่า Docker daemon รันอยู่
-sudo systemctl start docker
-# เพิ่ม jenkins user เข้า docker group
-sudo usermod -aG docker jenkins
+**Docker Hub**
 ```
-
-**Prometheus แสดง target เป็น DOWN**
-```bash
-# ตรวจว่าแอปเปิด /metrics ได้จริง
-curl http://localhost:5000/metrics
-# ตรวจ prometheus.yml ว่า host:port ตรงกับแอปจริง
+๋Jenkins ใส่แท็ก Image ผิด
 ```
 
 ---
