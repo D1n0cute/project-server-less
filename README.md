@@ -1,7 +1,6 @@
-# 🚀 [ชื่อโปรเจค] — ENG23 3074
+# 🚀 KindNote — ENG23 3074
 
-> _อธิบายโปรเจคสั้น ๆ ในประโยคเดียว_  
-> **ตัวอย่าง:** ระบบ API บันทึกโน้ต สร้างด้วย Python Flask containerize ด้วย Docker และ deploy บน Kubernetes ผ่าน Jenkins pipeline แบบอัตโนมัติ
+> เว็บแอปพลิเคชันสำหรับส่งต่อพลังบวกผ่านข้อความให้กำลังใจบนกำแพงดาว พัฒนาด้วย FastAPI และ Deploy แบบอัตโนมัติด้วยระบบ CI/CD ผ่าน Jenkins บน Kubernetes Cluster
 
 ---
 
@@ -9,20 +8,19 @@
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล | ความรับผิดชอบ |
 |-------------|-------------|---------------|
-| 6XXXXXXX | ชื่อ นามสกุล | Git, App Development |
-| 6XXXXXXX | ชื่อ นามสกุล | Jenkins, Docker |
-| 6XXXXXXX | ชื่อ นามสกุล | Terraform, Ansible |
-| 6XXXXXXX | ชื่อ นามสกุล | Kubernetes, Monitoring |
+| B6610364 | นายปัณณธร ขันละ | Git, App Development |
+| B6610920 | นายธนธรณ์ เหาะดอน | Jenkins, Docker |
+| B6643706 | นายชัยภัทร บุญมาสูงทรง | Terraform, Ansible |
 
 ---
 
 ## 📌 ภาพรวมโปรเจค
 
 ### แอปพลิเคชัน
-- **ชื่อ:** [ชื่อแอป]
-- **ประเภท:** [เช่น REST API / Web App]
-- **ภาษา / Framework:** [เช่น Python Flask / Node.js Express]
-- **คำอธิบาย:** [อธิบาย 2–3 ประโยคว่าแอปทำอะไร ใช้แก้ปัญหาอะไร]
+- **ชื่อ:** KindNote
+- **ประเภท:** Web App
+- **ภาษา / Framework:** Frontend: Typescript + React, Backend: Python + FastAPI
+- **คำอธิบาย:** ระบบที่เปิดให้ผู้ใช้งานสามารถพิมพ์ข้อความให้กำลังใจสั้น ๆ เพื่อนำไปแสดงผลแบบสุ่มบน "กำแพงพลังบวก" ในรูปแบบดวงดาวลอยอยู่ในอวกาศ
 
 ### Architecture Diagram
 ```
