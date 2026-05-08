@@ -268,7 +268,7 @@ http://20.239.20.37/
 ### Prometheus — เก็บ Metrics
 - ไฟล์ config: `monitoring/prometheus.yml`
 - Scrape ทุก **15 วินาที**
-- Target endpoint: `http://[app-host]:[port]/metrics`
+- Target endpoint: `localhost:9090`
 
 รัน Prometheus:
 ```bash
@@ -281,7 +281,7 @@ prometheus --config.file=monitoring/prometheus.yml
 - Data source: Prometheus (`http://localhost:9090`)
 
 วิธี import dashboard:
-1. เปิด Grafana ที่ `http://localhost:3000`
+1. เปิด Grafana ที่ `http://4.144.32.95`
 2. ไปที่ **Dashboards → Import**
 3. อัปโหลดไฟล์ `grafana-dashboard.json`
 
@@ -289,10 +289,9 @@ prometheus --config.file=monitoring/prometheus.yml
 
 | Panel | Metric (PromQL) | แสดงข้อมูลอะไร |
 |-------|-----------------|----------------|
-| Request Rate | `rate(http_requests_total[1m])` | จำนวน request ต่อวินาที |
-| Error Rate | `rate(http_requests_total{status=~"5.."}[1m])` | จำนวน error 5xx ต่อวินาที |
-| Latency (p95) | `histogram_quantile(0.95, ...)` | response time ที่ percentile 95 |
-| Pod Health | `up{job="[app-name]"}` | service ขึ้นหรือล่ม (1/0) |
+| Request Rate | `http_requests_total` | จำนวน request ต่อวินาที |
+| Latency (p95) | `http_request_duration_seconds_sum / http_request_duration_seconds_count` | response time ที่ percentile 95 |
+| Pod Health | `up{job="[fastapi-backend]"}` | service ขึ้นหรือล่ม (1/0) |
 
 ---
 
