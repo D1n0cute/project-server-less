@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime, timezone
-
+from prometheus_fastapi_instrumentator import Instrumentator
 from database import engine, Base, get_db
 from models import Message
 from schemas import MessageCreate, MessageOut
@@ -22,6 +22,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+Instrumentator().instrument(app).expose(app)
 
 # ✔ FIX CORS FOR PRODUCTION
 app.add_middleware(

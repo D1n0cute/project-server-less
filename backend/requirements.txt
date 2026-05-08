@@ -8,3 +8,4 @@ pytest
 pytest-asyncio
 httpx
 asgi-lifespan
+prometheus-fastapi-instrumentator>=7.0.0

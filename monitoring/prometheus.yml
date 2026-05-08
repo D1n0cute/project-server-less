@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s # ให้ Prometheus ไปดึงข้อมูลทุกๆ 15 วินาที
+  evaluation_interval: 15s
+
+scrape_configs:
+  # 1. ติดตามสถานะของตัว Prometheus เอง
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 2. ติดตาม Backend (FastAPI) ที่เราเพิ่งแก้โค้ดไป
+  - job_name: 'fastapi-backend'
+    metrics_path: '/metrics' # Path ที่เราตั้งไว้ใน main.py
+    static_configs:
+      - targets: ['backend-service:8000'] 
+        # 'backend-service' คือชื่อ Service ใน Kubernetes ของคุณ
+
+  # 3. ติดตาม Frontend (ถ้าคุณใช้ Nginx Exporter)
+  - job_name: 'frontend-nginx'
+    static_configs:
+      - targets: ['frontend-service:80']
