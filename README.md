@@ -62,21 +62,35 @@ Developer
 
 ```
 [project-name]/
-├── app/
-│   ├── app.py                  # โค้ดหลักของแอปพลิเคชัน
-│   ├── requirements.txt        # Python dependencies
-│   └── Dockerfile              # คำสั่งสร้าง Docker image
-├── Jenkinsfile                 # กำหนด CI/CD pipeline ทุก stage
-├── terraform/
-│   ├── main.tf                 # กำหนด resource ที่จะ provision
-│   ├── variables.tf            # ตัวแปร input
-│   └── outputs.tf              # ค่า output หลัง apply
 ├── ansible/
-│   ├── inventory               # รายชื่อ host เป้าหมาย
-│   └── playbook.yml            # tasks สำหรับ configure environment
+│   ├── inventory/               # รายชื่อ host เป้าหมาย
+│   │   └── prod
+│   ├── playbooks/               # tasks สำหรับ configure environment
+│   │   ├── backend.yml
+│   │   ├── frontend.yml
+│   │   └── ingress.yml
+│   └── ingress.yaml
+├── backend/
+│   └── dockerfile
+├── database/
+├── frontend/
+│   └── dockerfile
+├── Jenkinsfile/                 # กำหนด CI/CD pipeline ทุก stage
+│   ├── deploy/
+│   │   ├── backend/
+│   │   │   └── Jenkinsfile
+│   │   └── frontend/
+│   │       └── Jenkinsfile
+│   └── ibuild/
+│       ├── backend/
+│       │   └── Jenkinsfile
+│       └── frontend/
+│           └── Jenkinsfile
+├── terraform/
+│   └── main.tf                 # กำหนด resource ที่จะ provision
 ├── k8s/
-│   ├── deployment.yaml         # กำหนด Pods และ replicas
-│   └── service.yaml            # เปิดพอร์ตให้เข้าถึงแอปจากภายนอก
+│   ├── backend.yaml         
+│   └── frontend.yaml            
 ├── monitoring/
 │   ├── prometheus.yml          # ตั้งค่า scrape target
 │   └── grafana-dashboard.json  # Dashboard ที่ export จาก Grafana
@@ -97,7 +111,6 @@ Developer
 | Terraform | ≥ 1.x | Provision infrastructure |
 | Ansible | ≥ 2.15 | Configure environment |
 | kubectl | ≥ 1.28 | สั่งงาน Kubernetes cluster |
-| Minikube / K3s | latest | Kubernetes แบบ local |
 | Prometheus | ≥ 2.x | เก็บ metrics |
 | Grafana | ≥ 10.x | แสดง dashboard |
 
@@ -107,22 +120,46 @@ Developer
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/[username]/[project-name].git
-cd [project-name]
+git https://github.com/D1n0cute/project-server-less.git
+cd project-server-less
 ```
 
-### 2. รันแอปบนเครื่องโดยตรง (ไม่ผ่าน pipeline)
+### 2. รัน Local Jenkins
 ```bash
-cd app
-pip install -r requirements.txt
-python app.py
-# แอปรันที่ http://localhost:5000
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --group-add 963 \
+  jenkins
 ```
 
-### 3. Build และรันด้วย Docker
+### 3. Login Azure ใน Command line
 ```bash
-docker build -t [username]/[app-name]:latest ./app
-docker run -p 5000:5000 [username]/[app-name]:latest
+az login #เอา Credential ของ Azure เข้า Jenkins
+```
+
+### 4. Deploy Backend & Frontend ด้วย Jenkins
+```
+กด Deploy Pipeline ใน Jenkins
+```
+
+### 5. Sync k8s บนเครื่องเข้ากับ Cluster
+```bash
+az aks get-credentials \
+  -g aks-rg \
+  -n my-aks-cluster \
+  --overwrite-existing
+```
+
+### 6. ดู IP ของ Cluster
+```bash
+az aks get-credentials \
+  -g aks-rg \
+  -n my-aks-cluster \
+  --overwrite-existing
 ```
 
 ---
