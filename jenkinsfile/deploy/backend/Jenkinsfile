@@ -88,5 +88,18 @@ pipeline {
                 '''
             }
         }
+        stage('Deploy Monitoring') {
+            steps {
+                script {
+                    sh 'kubectl create configmap prometheus-config --from-file=monitoring/prometheus.yml --dry-run=client -o yaml | kubectl apply -f -'
+
+                    dir('monitoring') {
+                        sh 'kubectl apply -f prometheus-deployment.yaml'
+                        sh 'kubectl apply -f grafana-deployment.yaml'
+                    }
+                }
+            }
+        }
+        
     }
 }
