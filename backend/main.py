@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Hello
 app = FastAPI(
     title="Encouragement Wall API",
     version="1.0.0",
