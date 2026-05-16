@@ -167,7 +167,7 @@ export default function Wall() {
         <div className="card">
           <h2 className="card-title">ส่งกำลังใจให้โลก</h2>
           <p className="card-sub">
-            พิมพ์ข้อความ แล้วมันจะลอยอยู่บนกำแพง :3
+            พิมพ์ข้อความ แล้วมันจะลอยอยู่บนกำแพง :a
           </p>
 
           <textarea
